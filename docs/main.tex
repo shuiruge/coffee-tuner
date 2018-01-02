@@ -1,0 +1,192 @@
+\documentclass{article}
+\usepackage[english]{babel}
+\usepackage{amsmath,enumerate,bbm}
+
+%%%%%%%%%% Start TeXmacs macros
+\catcode`\|=\active \def|{
+\fontencoding{T1}\selectfont\symbol{124}\fontencoding{\encodingdefault}}
+\newcommand{\assign}{:=}
+\newcommand{\mathd}{\mathrm{d}}
+\newcommand{\tmop}[1]{\ensuremath{\operatorname{#1}}}
+\newenvironment{enumeratenumeric}{\begin{enumerate}[1.] }{\end{enumerate}}
+\newenvironment{tmindent}{\begin{tmparmod}{1.5em}{0pt}{0pt} }{\end{tmparmod}}
+\newenvironment{tmparmod}[3]{\begin{list}{}{\setlength{\topsep}{0pt}\setlength{\leftmargin}{#1}\setlength{\rightmargin}{#2}\setlength{\parindent}{#3}\setlength{\listparindent}{\parindent}\setlength{\itemindent}{\parindent}\setlength{\parsep}{\parskip}} \item[]}{\end{list}}
+\newtheorem{corollary}{Corollary}
+\newtheorem{theorem}{Theorem}
+%%%%%%%%%% End TeXmacs macros
+
+\begin{document}
+
+\section{Why}
+
+\section{How}
+
+\subsection{Notation}
+
+
+
+\subsection{Bayesian Approach}
+
+Let $n \in \mathbbm{N}^{+}$ the number of relavent features of making a good
+cup of coffee, e.g. the temperature of water; $x \in \mathbbm{R}^{n}$ the
+values of the features. Let $Y$ the taste of coffee under a given $x$, which
+is either $0$ (tastes bad) or $1$ (tastes good), thus naturally is a random
+variable obeys a Bernoulli distribution with probability (confidence) $\psi$,
+i.e. $Y \sim \tmop{Ber} ( \psi )$. Let $f$ the model relates $x$ and $\psi$,
+depending also on paramters $w \in \mathbbm{R}^{m}$ for some $m \in
+\mathbbm{N}^{+}$, i.e. $\psi =f ( x;w )$.
+
+The Bayesian approach is as follow.
+
+\begin{theorem}
+  We have
+  \[ p ( Y=1|X=x ) =\mathbbm{E}_{w_{( s )} \sim p ( W )} [  f ( x,w_{( s )} )
+     ] , \]
+  where $w_{( s )} \sim p ( W )$ means that $\{ w_{( s )} :s=1,2, \ldots \}$
+  are sampled from $P ( W )$.
+\end{theorem}
+
+\begin{proof}
+  By Bayesian formula,
+  \[ p ( Y=1|X=x ) = \frac{p ( X=x,Y=1 )}{p ( X=x )} . \]
+  Then by total probability formula,
+  \[ p ( X=x,Y=1 ) = \int_{\mathbbm{R}^{m}} \mathd w p ( X=x,Y=1,W=w ) , \]
+  then Bayesian formula gives
+  \[ p ( X=x,Y=1 ) = \int_{\mathbbm{R}^{m}} \mathd w p ( Y=1|X=x,W=w )  p (
+     X=x,W=w ) . \]
+  Since $x$ and $w$ are independent, $p ( X=x,W=w ) =p ( X=x )  p ( W=w )$.
+  Put all together,
+  \begin{eqnarray*}
+    p ( Y=1|X=x ) & = & \frac{p ( X=x,Y=1 )}{p ( x )}\\
+    & = & \frac{\int_{\mathbbm{R}^{m}} \mathd w p ( Y=1|X=x,W=w )  p (
+    X=x,W=w )}{p ( X=x )}\\
+    & = & \frac{\int_{\mathbbm{R}^{m}} \mathd w p ( Y=1|X=x,W=w )  p ( X=x ) 
+    p ( W=w )}{p ( X=x )}\\
+    & = & \int_{\mathbbm{R}^{m}} \mathd w p ( Y=1|X=x,W=w )  p ( W=w ) ,
+  \end{eqnarray*}
+  or simply,
+  \[ p ( Y=1|X=x ) =\mathbbm{E}_{w_{( s )}} [  p ( Y=1|X=x,W=w_{( s )} ) ] .
+  \]
+  And then insert $f$ as
+  \[ p ( Y=1|X=x,W=w ) =f ( x,w ) , \]
+  since $Y \sim \tmop{Ber} ( f ( x,w ) )$. So, in one word,
+  \[ p ( Y=1|X=x ) =\mathbbm{E}_{w_{( s )} \sim p ( W )} [  f ( x,w_{( s )} )
+     ] . \]
+\end{proof}
+
+What we want to find is a $x_{\ast}$, s.t. $p ( Y=1|X=x )$
+($=\mathbbm{E}_{w_{( s )} \sim p ( W )} [  f ( x,w_{( s )} ) ]$) is maximized.
+Or say, we are searching
+\[ x_{\ast} = \underset{x}{\tmop{argmax}} \{ \mathbbm{E}_{w_{( s )} \sim p ( W
+   )} [  f ( x,w_{( s )} ) ] \} . \]
+However, the only thing we have not known yet is the distribution of $W$. We
+are so humble that know nothing on how to make a good cup of coffee, so we use
+a flatten prior of $W$, i.e. $W \sim \tmop{Uniform}$, with some support wide
+enough. We can obtain the posterior of $W$ by inserting the data, i.e. a list
+of pairs $( x,y )$, as the value of $Y$ (the taste of a cup of coffee) given
+by some $x$. By feeding the data, we iterative gain the prior of $W$, which is
+the posterior in the previous iteration, as
+\[ p_{i+1} ( W=w ) = \frac{p ( Y=y_{i} ,X=x_{i} |W=w )  p_{i} ( W=w )}{p (
+   Y=y_{i} ,X=x_{i} )} . \]
+\begin{theorem}
+  If define $g ( a,b )$ as $b$ if $a=1$ and as $1-b$ if $a=0$, and if
+  initially use flatten prior, i.e. $p_{1} = \tmop{Const}$, then we have, for
+  data $D \assign \{ x_{i} ,y_{i} :i=1,2, \ldots ,N \}$,
+  \[ p_{N} ( W=w ) =c ( D ) \times \prod_{i=1}^{N} g ( y_{i} ,f ( x_{i} ,w ) )
+     , \]
+  or say,
+  \[ \ln [ p_{N} ( W=w ) ] = \sum_{i=1}^{N}   \ln [ g ( y_{i} ,f ( x_{i} ,w )
+     ) ] + \ln [ c ( D ) ] , \]
+  where $c ( D )$ can also be seen as the normalization factor of $p_{N} ( W=w
+  )$ since Bayesian formula always ensures normalization of probability.
+\end{theorem}
+
+\begin{proof}
+  By Bayesian formula and the independence between $X$ and $W$,
+  \[ p ( Y=y_{i} ,X=x_{i} |W=w ) =p ( Y=y_{i} |X=x_{i} ,W=w )  p ( X=x_{i} )
+  \]
+  and
+  \[ p ( Y=y_{i} ,X=x_{i} ) =p ( Y=y_{i} |X=x_{i} )  p ( X=x_{i} ) , \]
+  thus
+  \[ p_{i+1} ( W=w ) =p_{i} ( W=w )   \frac{p ( Y=y_{i} |X=x_{i} ,W=w )}{p (
+     Y=y_{i} |X=x_{i} )} ; \]
+  and since we have known in previous that $p ( Y=1|X=x_{i} )
+  =\mathbbm{E}_{w_{( s )} \sim p_{i} ( W )} [  f ( x_{i} ,w_{( s )} ) ]$ and
+  likewise $p ( Y=0|X=x_{i} ) =\mathbbm{E}_{w_{( s )} \sim p_{i} ( W )} [ 1- f
+  ( x_{i} ,w_{( s )} ) ]$, we finally get, if $y_{i} =1$
+  \[ p_{i+1} ( W=w ) =p_{i} ( W=w )   \frac{f ( x_{i} ,w )}{\mathbbm{E}_{w_{(
+     s )} \sim p_{i} ( W )} [  f ( x_{i} ,w_{( s )} ) ]} , \]
+  else ($y_{i} =0$)
+  \[ p_{i+1} ( W=w ) =p_{i} ( W=w )   \frac{1-f ( x_{i} ,w
+     )}{\mathbbm{E}_{w_{( s )} \sim p_{i} ( W )} [  1-f ( x_{i} ,w_{( s )} )
+     ]} . \]
+  
+  
+  After the first iteration, by $x_{1}$ and $y_{1} =1$,
+  \[ p_{2} ( W=w ) = \tmop{Const}   \frac{f ( x_{1} ,w )}{\mathbbm{E}_{w_{( s
+     )} \sim \tmop{Uniform}} [  f ( x_{1} ,w_{( s )} ) ]} =c ( x_{1} ,y_{1} ) 
+     f ( x_{1} ,w ) . \]
+  Then the next iteration, suppose $y_{2} =1$ still,
+  \[ p_{3} ( W=w ) = \{ c ( x_{1} ,y_{1} )  f ( x_{1} ,w ) \}   \left\{
+     \frac{f ( x_{2} ,w )}{\mathbbm{E}_{w_{( s )} \sim p_{2} ( W )} [  f (
+     x_{2} ,w_{( s )} ) ]} \right\} , \]
+  and re-define $c ( \{ ( x_{1} ,y_{1} ) , ( x_{2} ,y_{2} ) \} ) \assign c (
+  x_{1} ,y_{1} ) /\mathbbm{E}_{w_{( s )} \sim p_{2} ( W )} [  f ( x_{2} ,w_{(
+  s )} ) ]$, thus
+  \[ p_{3} ( W=w ) =c ( \{ ( x_{1} ,y_{1} ) , ( x_{2} ,y_{2} ) \} )  f ( x_{1}
+     ,w )  f ( x_{2} ,w ) . \]
+  And if $y_{2} =0$,
+  \[ p_{3} ( W=w ) =c ( \{ ( x_{1} ,y_{1} ) , ( x_{2} ,y_{2} ) \} )  f ( x_{1}
+     ,w ) [  1-f ( x_{2} ,w ) ] . \]
+  So, generally, if define $g ( a,b )$ as $b$ if $a=1$ and as $1-b$ if $a=0$,
+  then for data $D \assign \{ x_{i} ,y_{i} :i=1,2, \ldots ,N \}$,
+  \[ p_{N} ( W=w ) =c ( D ) \times \prod_{i=1}^{N} g ( y_{i} ,f ( x_{i} ,w ) )
+     , \]
+  or say,
+  \[ \ln [ p_{N} ( W=w ) ] = \sum_{i=1}^{N}   \ln [ g ( y_{i} ,f ( x_{i} ,w )
+     ) ] +c ( D ) . \]
+\end{proof}
+
+
+
+\begin{corollary}
+  If data $D= \{ x_{\tmop{BEST}} ,y_{i} =1:i=1,2, \ldots ,N \}$, then
+  \[ \lim_{N \rightarrow + \infty}   \underset{x}{\tmop{argmax}} \{
+     \mathbbm{E}_{w_{( s )} \sim p_{N} ( W )} [ f ( x,w_{( s )} ) ] \}
+     =x_{\tmop{BEST}} . \]
+\end{corollary}
+
+\begin{proof}
+  XXX $p_{N} ( W=w ) =c ( D )   [ f ( x_{\tmop{BEST}} ,w ) ]^{N}$
+\end{proof}
+
+{\algorithm{XXX (init)
+\begin{tmindent}
+  \begin{enumeratenumeric}
+    \item $D \leftarrow D \cup ( x_{i} ,y_{i} )$;
+    
+    \item $\ln [ p ( W=w ) ] \leftarrow \ln [ p ( W=w ) ] +  \ln [ g ( y_{i}
+    ,f ( x_{i} ,w ) ) ]$;
+    
+    \item fit $p ( W )$ by variational inference;
+    
+    \item sample $\{ w_{s} :s=1,2, \ldots ,N_{s} \}$ from $p ( W )$;
+    
+    \item $x_{\ast} = \underset{x}{\tmop{argmax}} \{ \mathbbm{E}_{w_{s}} [ f (
+    x,w_{s} ) ] \}$;
+    
+    \item Make a cup of coffee by feature values $x_{\ast}$;
+    
+    \item Taste the cupe of coffee;
+    
+    \item Return your opinion as $y_{\ast}$;
+    
+    \item $( x_{i+1} ,y_{i+1} ) \leftarrow ( x_{\ast} ,y_{\ast} )$.
+  \end{enumeratenumeric}
+\end{tmindent}}}
+
+\subsection{An Instant Model}
+
+
+
+\end{document}
