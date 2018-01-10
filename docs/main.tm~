@@ -250,8 +250,14 @@
   </proof>
 
   <\algorithm>
+    <\enumerate-numeric>
+      <item>Set <math|p<around*|(|W|)>>
+
+      <item>iteratively:
+    </enumerate-numeric>
+
     <\indent>
-      <\enumerate-roman>
+      <\enumerate-numeric>
         <item><math|D\<leftarrow\>D\<cup\><around*|(|x<rsub|i>,y<rsub|i>|)>>;
 
         <item><math|ln<around*|[|p<around*|(|W=w|)>|]>\<leftarrow\>ln<around*|[|p<around*|(|W=w|)>|]>+
@@ -267,32 +273,12 @@
         <item>Make a cup of coffee by feature values <math|x<rsub|\<ast\>>>;
 
         <item>Taste the cupe of coffee;
-      </enumerate-roman>
 
-      \;
+        <item>Return your opinion as <math|y<rsub|\<ast\>>>;
 
-      \;
-
-      \;
-
-      \;
-
-      \;
-
-      \;
-
-      \;
-
-      Return your opinion as <math|y<rsub|\<ast\>>>;
-
-      <math|<around*|(|x<rsub|i+1>,y<rsub|i+1>|)>\<leftarrow\><around*|(|x<rsub|\<ast\>>,y<rsub|\<ast\>>|)>>.
+        <item><math|<around*|(|x<rsub|i+1>,y<rsub|i+1>|)>\<leftarrow\><around*|(|x<rsub|\<ast\>>,y<rsub|\<ast\>>|)>>.
+      </enumerate-numeric>
     </indent>
-
-    <\render-code>
-      \;
-
-      <math|>
-    </render-code>
   </algorithm>
 
   <subsection|An Instant Model>

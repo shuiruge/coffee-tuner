@@ -3,11 +3,45 @@
 
 
 import abc
+from copy import deepcopy
+import numpy as np
 import tensorflow as tf
+from tensorflow.contrib.distributions import (
+    Categorical, NormalWithSoftplusScale, Mixture )
+try:
+    from tensorflow.contrib.distributions import Independent
+except:
+    print('WARNING - Your TF < 1.4.0.')
+    from nn4post.utils.independent import Independent
 
 from nn4post import build_nn4post
 from nn4post.utils import get_param_shape, get_parse_param, get_trained_q
 from nn4post.utils.tf_trainer import SimpleTrainer
+
+
+
+def get_trained_posterior(trained_var, param_shape):
+
+    n_c = trained_var['a'].shape[0]
+    cat = Categorical(logits=trained_var['a'])
+
+    parse_param = get_parse_param(param_shape)
+    mu_list = [parse_param(trained_var['mu'][i]) for i in range(n_c)]
+    zeta_list = [parse_param(trained_var['zeta'][i]) for i in range(n_c)]
+
+    trained_posterior = {}
+
+    for param_name in trained_var.keys():
+
+        components = [
+            Independent(NormalWithSoftplusScale(
+                mu_list[i][param_name], zeta_list[i][param_name]))
+            for i in range(n_c)
+        ]
+        mixture = Mixture(cat, components)
+        trained_posterior[param_name] = mixture
+
+    return trained_posterior
 
 
 
@@ -28,12 +62,15 @@ class BaseCoffeeTuner(abc.ABC):
 
         self.graph = tf.Graph()
         self.prior = self.get_prior()
+        self.param_shape = get_param_shape(self.prior)
+
+        # Initialize posterior
+        self.posterior = deepcopy(self.prior)
 
         self.x, self.y, self.collection, self.grads_and_vars = self.compile()
 
-        self.loss = self.collection['loss']
-        self.trainer = SimpleTrainer(loss=self.loss,
-            gvs=self.grads_and_vars, dir_to_ckpt=self.dir_to_ckpt)
+        self.trainer = SimpleTrainer(gvs=self.grads_and_vars,
+                                     dir_to_ckpt=self.dir_to_ckpt)
         # TODO: self.argmaxer = SimpleTrainer(loss=XXX)
 
     
@@ -64,13 +101,23 @@ class BaseCoffeeTuner(abc.ABC):
 
         self.trainer.train(n_iters, feed_dict_generator)
 
-        trained_var = {}
-        for var_name in ['a', 'mu', 'zeta']:
-            var_value = self.trainer.sess.run(self.ops[var_name])
-            trained_var[var_name] = var_value
+        trained_var = {
+            var_name:
+                self.trainer.sess.run(self.collection[var_name])
+            for var_name in ['a', 'mu', 'zeta']
+        }
 
-        trained_q = get_trained_q(trained_var)
-        return trained_q
+        trained_posterior = \
+            get_trained_posterior(trained_var, self.param_shape)
+        return trained_posterior
+
+
+    def sample(self, n_samples=100):
+        samples =  {
+            param_name: param_dist.sample(n_samples)
+            for param_name, param_dist in self.posterior.items()
+        }
+        return samples
 
     
     def sugguests(self):
@@ -108,10 +155,10 @@ class BaseCoffeeTuner(abc.ABC):
                 # shape: `[len(self.data)]`
                 y_tensor = tf.placeholder(shape=[None], dtype=self.dtype)
 
-            with tf.name_scope('log_joint'):
+            with tf.name_scope('log_likelihood'):
 
-                def log_joint(param):
-                    """:math:`ln p ( data, param )`, which, in documentation,
+                def log_likelihood(param):
+                    """:math:`ln p ( data | param )`, which, in documentation,
                     is :math:`\sum_i ln g( y_i, f(x_i, w) )`.
 
                     Args:
@@ -121,11 +168,11 @@ class BaseCoffeeTuner(abc.ABC):
                             Scalar.
                     """
 
-                    log_joint_list = tf.map_fn(
-                        lambda x, y: log_g(x, y, param),
-                        (x_tensor, y_tensor))
+                    _log_g = lambda x, y: log_g(x, y, param)
 
-                    return tf.reduce_sum(log_joint_list)
+                    return tf.reduce_sum(
+                        tf.map_fn( _log_g, (x_tensor, y_tensor) )
+                    )
 
             with tf.name_scope('log_prior'):
 
@@ -146,9 +193,9 @@ class BaseCoffeeTuner(abc.ABC):
 
             with tf.name_scope('log_posterior'):
 
-                @vectorize(get_param_shape(self.prior))
+                @vectorize(self.param_shape)
                 def log_posterior(param):
-                    return log_joint(param) + log_prior(param)
+                    return log_likelihood(param) + log_prior(param)
 
 
             with tf.name_scope('variational_inference'):
@@ -182,7 +229,7 @@ class BaseCoffeeTuner(abc.ABC):
             Scalar, as the parameter of the Bernoulli distribution of "taste".
             In the documentation, this is the :math:`\psi`.
         """
-        assert param.keys() == self.posterior.keys()
+        assert param.keys() == self.prior.keys()
         pass
 
 

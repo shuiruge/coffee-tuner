@@ -250,17 +250,14 @@
   </proof>
 
   <\algorithm>
-    XXX (init)
+    <\enumerate-numeric>
+      <item>Set <math|p<around*|(|W|)>> by prior;
+
+      <item>then iteratively:
+    </enumerate-numeric>
 
     <\indent>
-      <\enumerate-numeric>
-        <item><math|D\<leftarrow\>D\<cup\><around*|(|x<rsub|i>,y<rsub|i>|)>>;
-
-        <item><math|ln<around*|[|p<around*|(|W=w|)>|]>\<leftarrow\>ln<around*|[|p<around*|(|W=w|)>|]>+
-        ln<around*|[|g<around*|(|y<rsub|i>,f<around*|(|x<rsub|i>,w|)>|)>|]>>;
-
-        <item>fit <math|p<around*|(|W|)>> by variational inference;
-
+      <\enumerate-roman>
         <item>sample <math|<around*|{|w<rsub|s>:s=1,2,\<ldots\>,N<rsub|s>|}>>
         from <math|p<around*|(|W|)>>;
 
@@ -272,8 +269,14 @@
 
         <item>Return your opinion as <math|y<rsub|\<ast\>>>;
 
-        <item><math|<around*|(|x<rsub|i+1>,y<rsub|i+1>|)>\<leftarrow\><around*|(|x<rsub|\<ast\>>,y<rsub|\<ast\>>|)>>.
-      </enumerate-numeric>
+        <item><math|D\<leftarrow\>D\<cup\><around*|(|x<rsub|\<ast\>>,y<rsub|\<ast\>>|)>>;
+
+        <item><math|ln<around*|[|p<around*|(|W=w|)>|]>\<leftarrow\>ln<around*|[|p<around*|(|W=w|)>|]>+
+        ln<around*|[|g<around*|(|y<rsub|i>,f<around*|(|x<rsub|i>,w|)>|)>|]>>;
+
+        <item>fit <math|p<around*|(|W|)>> by variational inference which then
+        replaces <math|p<around*|(|W|)>>;
+      </enumerate-roman>
     </indent>
   </algorithm>
 
